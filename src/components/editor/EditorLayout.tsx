@@ -136,6 +136,8 @@ export const EditorLayout: React.FC = () => {
             currentTime += defaultDuration;
           }
         }
+      }).catch((err) => {
+        console.error("[EditorLayout] Subtitle import failed:", err);
       });
     } else {
       // Handle other types (audio, stickers, effects, transitions)

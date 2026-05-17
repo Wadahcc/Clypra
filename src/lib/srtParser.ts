@@ -39,6 +39,8 @@ function parseTimestamp(ts: string): number {
 /**
  * Parse an SRT file string into an array of SrtEntry objects.
  */
+const MAX_SRT_ENTRIES = 5000;
+
 export function parseSrt(content: string): SrtEntry[] {
   const entries: SrtEntry[] = [];
 
@@ -75,6 +77,7 @@ export function parseSrt(content: string): SrtEntry[] {
     if (text.length === 0) continue;
 
     entries.push({ index, startTime, endTime, text });
+    if (entries.length >= MAX_SRT_ENTRIES) break;
   }
 
   return entries;

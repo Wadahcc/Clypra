@@ -14,6 +14,8 @@ export interface TxtEntry {
  * Parse a plain text file into an array of TxtEntry objects.
  * Each non-empty line becomes an entry.
  */
+const MAX_TXT_ENTRIES = 5000;
+
 export function parseTxt(content: string): TxtEntry[] {
   // Strip BOM (Windows Notepad adds this) and normalize line endings
   const stripped = content.replace(/^\uFEFF/, "");
@@ -22,5 +24,6 @@ export function parseTxt(content: string): TxtEntry[] {
     .split("\n")
     .map((line) => line.trim())
     .filter((line) => line.length > 0)
+    .slice(0, MAX_TXT_ENTRIES)
     .map((text, i) => ({ index: i + 1, text }));
 }
