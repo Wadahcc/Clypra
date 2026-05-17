@@ -15,7 +15,9 @@ export interface TxtEntry {
  * Each non-empty line becomes an entry.
  */
 export function parseTxt(content: string): TxtEntry[] {
-  const normalized = content.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+  // Strip BOM (Windows Notepad adds this) and normalize line endings
+  const stripped = content.replace(/^\uFEFF/, "");
+  const normalized = stripped.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
   return normalized
     .split("\n")
     .map((line) => line.trim())

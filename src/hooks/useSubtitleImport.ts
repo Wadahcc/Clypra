@@ -35,7 +35,7 @@ export const useSubtitleImport = () => {
 
       const path = Array.isArray(selected) ? selected[0] : selected;
       const content: string = await invoke("read_text_file", { path });
-      const filename = path.split("/").pop() || "Unknown";
+      const filename = path.split(/[/\\]/).pop() || "Unknown";
 
       if (fileType === "srt") {
         const entries = parseSrt(content);

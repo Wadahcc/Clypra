@@ -115,8 +115,24 @@ pub fn rename_project(app: tauri::AppHandle, project_id: String, new_name: Strin
 
 #[tauri::command]
 pub fn read_text_file(path: String) -> Result<String, String> {
-    fs::read_to_string(&path)
-        .map_err(|e| format!("Failed to read file: {}", e))
+    let file_path = std::path::Path::new(&path);
+    if !file_path.exists() {
+        return Err(format!("File not found: {}", path));
+    }
+
+    // Try UTF-8 first, then fall back to Latin-1 (Windows-1252 compatible)
+    match fs::read_to_string(&path) {
+        Ok(content) => {
+            // Strip UTF-8 BOM if present
+            let stripped = content.strip_prefix('\u{FEFF}').unwrap_or(&content);
+            Ok(stripped.to_string())
+        }
+        Err(_) => {
+            let bytes = fs::read(&path)
+                .map_err(|e| format!("Failed to read file: {}", e))?;
+            Ok(bytes.iter().map(|&b| b as char).collect())
+        }
+    }
 }
 
 #[tauri::command]

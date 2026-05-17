@@ -42,8 +42,9 @@ function parseTimestamp(ts: string): number {
 export function parseSrt(content: string): SrtEntry[] {
   const entries: SrtEntry[] = [];
 
-  // Normalize line endings and split into blocks separated by blank lines
-  const normalized = content.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
+  // Strip BOM (Windows Notepad adds this) and normalize line endings
+  const stripped = content.replace(/^\uFEFF/, "");
+  const normalized = stripped.replace(/\r\n/g, "\n").replace(/\r/g, "\n");
   const blocks = normalized.split(/\n\n+/).filter((b) => b.trim().length > 0);
 
   for (const block of blocks) {
