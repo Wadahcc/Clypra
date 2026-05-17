@@ -8,10 +8,12 @@ import { useTimelineStore } from "@/store/timelineStore";
 import { useProjectStore } from "@/store/projectStore";
 import { createClipFromAsset } from "@/lib/timelineClip";
 import { createTextClip, TEXT_PRESETS } from "@/lib/textClip";
+import { useSubtitleImport } from "@/hooks/useSubtitleImport";
 
 export const EditorLayout: React.FC = () => {
   const { tracks, addClip, addTrack, getTimelineEndTime } = useTimelineStore();
   const { mediaAssets, project } = useProjectStore();
+  const { importSubtitleFile } = useSubtitleImport();
 
   const handleAddToTimeline = (item: any, type: string) => {
     // Handle different item types
@@ -84,8 +86,59 @@ export const EditorLayout: React.FC = () => {
       });
 
       addClip(textClip);
+    } else if (type === "captions" && (item.type === "import-srt" || item.type === "import-txt")) {
+      const fileType = item.type === "import-srt" ? "srt" : "txt";
+      importSubtitleFile(fileType as "srt" | "txt").then((result) => {
+        if (!result) return;
+
+        // Find or create text track
+        let targetTrack = useTimelineStore.getState().tracks.find((t) => t.type === "text" && !t.locked);
+        if (!targetTrack) {
+          addTrack("text");
+          targetTrack = useTimelineStore.getState().tracks.find((t) => t.type === "text" && !t.locked);
+        }
+        if (!targetTrack) return;
+
+        const canvasWidth = project?.canvasWidth || 1920;
+        const canvasHeight = project?.canvasHeight || 1080;
+
+        if (result.type === "srt") {
+          for (const entry of result.entries) {
+            const duration = entry.endTime - entry.startTime;
+            if (duration <= 0) continue;
+            const clip = createTextClip({
+              trackId: targetTrack.id,
+              startTime: entry.startTime,
+              duration,
+              text: entry.text,
+              canvasWidth,
+              canvasHeight,
+              fontSize: 48,
+              position: "bottom",
+            });
+            addClip(clip);
+          }
+        } else {
+          let currentTime = getTimelineEndTime();
+          const defaultDuration = 3.0;
+          for (const entry of result.entries) {
+            const clip = createTextClip({
+              trackId: targetTrack.id,
+              startTime: currentTime,
+              duration: defaultDuration,
+              text: entry.text,
+              canvasWidth,
+              canvasHeight,
+              fontSize: 48,
+              position: "bottom",
+            });
+            addClip(clip);
+            currentTime += defaultDuration;
+          }
+        }
+      });
     } else {
-      // Handle other types (audio, stickers, effects, transitions, captions)
+      // Handle other types (audio, stickers, effects, transitions)
       // TODO: Implement handlers for other types
     }
   };

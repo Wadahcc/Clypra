@@ -114,6 +114,12 @@ pub fn rename_project(app: tauri::AppHandle, project_id: String, new_name: Strin
 }
 
 #[tauri::command]
+pub fn read_text_file(path: String) -> Result<String, String> {
+    fs::read_to_string(&path)
+        .map_err(|e| format!("Failed to read file: {}", e))
+}
+
+#[tauri::command]
 pub fn delete_project(app: tauri::AppHandle, project_id: String) -> Result<(), String> {
     let projects_dir = get_projects_dir(&app)?;
     let file_path = projects_dir.join(format!("{}.json", project_id));

@@ -1094,6 +1094,7 @@ pub fn run() {
             commands::project::get_recent_projects,
             commands::project::delete_project,
             commands::project::rename_project,
+            commands::project::read_text_file,
             // Native FFmpeg decoder commands (fast path for thumbnails)
             decode_frame,
             decode_frame_gpu,
