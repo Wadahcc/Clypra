@@ -113,6 +113,53 @@ pub fn rename_project(app: tauri::AppHandle, project_id: String, new_name: Strin
     Ok(())
 }
 
+const MAX_TEXT_FILE_SIZE: u64 = 10 * 1024 * 1024; // 10 MB
+const ALLOWED_TEXT_EXTENSIONS: &[&str] = &["srt", "txt"];
+
+#[tauri::command]
+pub fn read_text_file(path: String) -> Result<String, String> {
+    let file_path = std::path::Path::new(&path);
+
+    // Validate file extension
+    let ext = file_path
+        .extension()
+        .and_then(|e| e.to_str())
+        .map(|e| e.to_lowercase())
+        .unwrap_or_default();
+    if !ALLOWED_TEXT_EXTENSIONS.contains(&ext.as_str()) {
+        return Err(format!("Unsupported file type: .{}. Only .srt and .txt files are allowed.", ext));
+    }
+
+    // Resolve symlinks and verify the file exists
+    let canonical = file_path.canonicalize()
+        .map_err(|_| format!("File not found or inaccessible: {}", path))?;
+
+    // Check file size before reading
+    let metadata = fs::metadata(&canonical)
+        .map_err(|e| format!("Cannot read file metadata: {}", e))?;
+    if metadata.len() > MAX_TEXT_FILE_SIZE {
+        return Err(format!("File too large ({:.1} MB). Maximum allowed size is {} MB.",
+            metadata.len() as f64 / (1024.0 * 1024.0),
+            MAX_TEXT_FILE_SIZE / (1024 * 1024)));
+    }
+    if !metadata.is_file() {
+        return Err("Path is not a regular file.".to_string());
+    }
+
+    // Try UTF-8 first, then fall back to Latin-1 (Windows-1252 compatible)
+    match fs::read_to_string(&canonical) {
+        Ok(content) => {
+            let stripped = content.strip_prefix('\u{FEFF}').unwrap_or(&content);
+            Ok(stripped.to_string())
+        }
+        Err(_) => {
+            let bytes = fs::read(&canonical)
+                .map_err(|e| format!("Failed to read file: {}", e))?;
+            Ok(bytes.iter().map(|&b| b as char).collect())
+        }
+    }
+}
+
 #[tauri::command]
 pub fn delete_project(app: tauri::AppHandle, project_id: String) -> Result<(), String> {
     let projects_dir = get_projects_dir(&app)?;

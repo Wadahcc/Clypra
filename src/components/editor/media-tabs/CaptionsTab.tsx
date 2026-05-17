@@ -1,5 +1,5 @@
 import React from "react";
-import { Wand2, Plus } from "lucide-react";
+import { Wand2, Plus, FileText, Subtitles } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import type { TabProps } from "./types";
 
@@ -54,6 +54,20 @@ export const CaptionsTab: React.FC<TabProps> = ({ onAddToTimeline }) => {
         <Plus className="w-4 h-4" />
         Add Manual Caption
       </Button>
+
+      <div className="pt-3 border-t border-border">
+        <h4 className="text-xs font-semibold text-text-muted mb-2">Import Subtitles</h4>
+        <div className="space-y-2">
+          <Button variant="secondary" size="sm" className="w-full" onClick={() => onAddToTimeline?.({ type: "import-srt" }, "captions")}>
+            <Subtitles className="w-4 h-4" />
+            Import SRT File
+          </Button>
+          <Button variant="secondary" size="sm" className="w-full" onClick={() => onAddToTimeline?.({ type: "import-txt" }, "captions")}>
+            <FileText className="w-4 h-4" />
+            Import TXT File
+          </Button>
+        </div>
+      </div>
 
       <div className="pt-3 border-t border-border">
         <h4 className="text-xs font-semibold text-text-muted mb-2">Caption Styles</h4>
